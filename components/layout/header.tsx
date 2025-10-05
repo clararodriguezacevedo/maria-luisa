@@ -3,11 +3,13 @@
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Package, User, LogOut, ArrowLeft } from "lucide-react"
-import Image from "next/image";
+import Image from "next/image"
 
 interface HeaderProps {
+  user: any
   isAdmin: boolean
   onLoginClick: () => void
+  onSignupClick: () => void
   onLogout: () => void
   showBackButton?: boolean
   onBackClick?: () => void
@@ -15,47 +17,46 @@ interface HeaderProps {
 }
 
 export function Header({
+  user,
   isAdmin,
   onLoginClick,
+  onSignupClick,
   onLogout,
   showBackButton = false,
   onBackClick,
   title = "Inventario",
 }: HeaderProps) {
   return (
-    <div className="bg-white shadow-sm border-b p-4">
-      <div className="max-w-md mx-auto">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            {showBackButton && onBackClick && (
-              <Button variant="ghost" size="sm" onClick={onBackClick}>
-                <ArrowLeft className="h-5 w-5" />
+    <header className="bg-white shadow-sm border-b p-4 ">
+      <div className="max-w-md mx-auto items-center flex flex-row justify-between gap-4">
+        <div className="flex items-center gap-3">
+          {showBackButton && onBackClick && (
+            <Button variant="ghost" size="sm" onClick={onBackClick}>
+              <ArrowLeft className="h-5 w-5" />
+            </Button>
+          )}
+          <Image src="/logo-hogar.png" alt="Logo" width={80} height={80} />
+        </div>
+        <h1 className="text-xl font-bold text-gray-900">{title}</h1>
+        <div className="flex flex-col items-end gap-2 ">
+          {user ? (
+            <>
+              <Badge variant="default" className="text-xs px-2 py-1">
+                {isAdmin ? "Administrador" : "Usuario"}
+              </Badge>
+              <Button variant="outline" size="sm" onClick={onLogout}>
+                <LogOut className="h-4 w-4 mr-1" />
+                <span className="text-sm">Salir</span>
               </Button>
-            )}
-           
-            <Image src="/logo-hogar.png" alt="Logo" width={80} height={80} />
-
-            <h1 className="text-xl font-bold text-gray-900">{title}</h1>
-          </div>
-          <div className="flex items-center gap-2">
-            {isAdmin ? (
-              <div className="flex items-center gap-2">
-                <Badge variant="default" className="text-xs px-2 py-1">
-                  Administrador
-                </Badge>
-                <Button variant="outline" size="sm" onClick={onLogout}>
-                  <LogOut className="h-4 w-4" />
-                </Button>
-              </div>
-            ) : (
-              <Button variant="outline" size="sm" onClick={onLoginClick}>
-                <User className="h-4 w-4 mr-1" />
-                <span className="text-sm">Admin</span>
-              </Button>
-            )}
-          </div>
+            </>
+          ) : (
+            <Button variant="outline" size="sm" onClick={onLoginClick}>
+              <User className="h-4 w-4 mr-1" />
+              <span className="text-sm">Iniciar Sesión</span>
+            </Button>
+          )}
         </div>
       </div>
-    </div>
+    </header>
   )
 }

@@ -12,9 +12,10 @@ interface LoginDialogProps {
   open: boolean
   onOpenChange: (open: boolean) => void
   onLogin: (email: string, password: string) => Promise<boolean>
+  onSignupClick: () => void
 }
 
-export function LoginDialog({ open, onOpenChange, onLogin }: LoginDialogProps) {
+export function LoginDialog({ open, onOpenChange, onLogin, onSignupClick }: LoginDialogProps) {
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [isLoading, setIsLoading] = useState(false)
@@ -56,7 +57,7 @@ export function LoginDialog({ open, onOpenChange, onLogin }: LoginDialogProps) {
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-sm">
         <DialogHeader>
-          <DialogTitle className="text-xl">Iniciar Sesión como Administrador</DialogTitle>
+          <DialogTitle className="text-xl">Iniciar Sesión</DialogTitle>
         </DialogHeader>
         <div className="space-y-4">
           <div>
@@ -88,6 +89,20 @@ export function LoginDialog({ open, onOpenChange, onLogin }: LoginDialogProps) {
           <Button onClick={handleLogin} disabled={isLoading} className="w-full text-lg py-6">
             {isLoading ? "Iniciando sesión..." : "Iniciar Sesión"}
           </Button>
+
+          <div className="space-y-2 mt-4 text-center">
+            <p className="text-sm text-gray-600">
+              ¿No tenés una cuenta?{" "}
+              <button
+                type="button"
+                className="text-blue-600 underline hover:text-blue-800"
+                onClick={onSignupClick} // pass this prop from the page
+                disabled={isLoading}
+              >
+                Regístrate
+              </button>
+            </p>
+          </div>
         </div>
       </DialogContent>
     </Dialog>

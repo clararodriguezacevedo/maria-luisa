@@ -7,6 +7,7 @@ import { LoginDialog } from "@/components/dialogs/login-dialog"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
+import { SignupDialog } from "@/components/dialogs/signup-dialog"
 import { useInventory } from "@/hooks/use-inventory"
 import { useAuth } from "@/hooks/use-auth"
 import { Package, Minus, ShoppingCart, Bell, ChevronRight, History } from "lucide-react"
@@ -14,12 +15,24 @@ import { Package, Minus, ShoppingCart, Bell, ChevronRight, History } from "lucid
 export default function HomePage() {
   const router = useRouter()
   const { lowStockItems, outOfStockItems, dailyUsage, dailyPurchases, usageHistory } = useInventory()
-  const { isAdmin, isLoading, login, logout } = useAuth()
+  const { isAdmin, user, isLoading, login, register, logout } = useAuth()
   const [showLogin, setShowLogin] = useState(false)
+  const [showSignup, setShowSignup] = useState(false)
+
 
   const handleLogin = async (email: string, password: string) => {
     return await login(email, password)
   }
+
+  const handleSignup = async (email: string, password: string) => {
+  const success = await register(email, password)
+  if (success) {
+    setShowSignup(false)
+    setShowLogin(false) // <--- también cerramos login
+  }
+  return success
+}
+
 
 
   const totalUsedToday = dailyUsage.reduce((sum, item) => sum + item.quantity, 0)
@@ -95,7 +108,14 @@ export default function HomePage() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <Header isAdmin={isAdmin} onLoginClick={() => setShowLogin(true)} onLogout={logout} title="Panel Principal" />
+      <Header
+        user={user}
+        isAdmin={isAdmin}
+        onLoginClick={() => setShowLogin(true)}
+        onSignupClick={() => setShowSignup(true)}
+        onLogout={logout}
+        title="Panel Principal"
+      />
 
       <div className="p-4">
         <div className="max-w-md mx-auto space-y-4">
@@ -105,13 +125,20 @@ export default function HomePage() {
 
           {navigationCards.map((card) => {
             // Ocultar opciones de admin si no está logueado
+            if (card.href === "/usage" && !user) return null
             if (card.adminOnly && !isAdmin) return null
 
             return (
               <Card
                 key={card.href}
                 className={`${card.color} cursor-pointer hover:shadow-md transition-shadow`}
-                onClick={() => router.push(card.href)}
+                onClick={() => {
+                  if (!user) {
+                    setShowLogin(true)
+                  } else {
+                    router.push(card.href)
+                  }
+                }}
               >
                 <CardContent className="p-4">
                   <div className="flex items-center justify-between">
@@ -138,17 +165,27 @@ export default function HomePage() {
             )
           })}
 
-          {!isAdmin && (
-            <div className="text-center py-4 border-t border-gray-200 mt-6">
-              <Button variant="outline" onClick={() => setShowLogin(true)} className="text-blue-600 border-blue-200">
-                Iniciar Sesión como Administrador
+          <div className="text-center py-4 border-t border-gray-200 mt-6 space-x-2">
+            {!user ? (
+              <>
+                <Button variant="outline" onClick={() => setShowLogin(true)}>
+                  Iniciar Sesión
+                </Button>
+                <Button variant="secondary" onClick={() => setShowSignup(true)}>
+                  Registrarse
+                </Button>
+              </>
+            ) : (
+              <Button variant="outline" onClick={logout}>
+                Cerrar Sesión
               </Button>
-            </div>
-          )}
+            )}
+          </div>
         </div>
       </div>
 
-      <LoginDialog open={showLogin} onOpenChange={setShowLogin} onLogin={handleLogin} />
+      <LoginDialog open={showLogin} onOpenChange={setShowLogin} onLogin={handleLogin} onSignupClick={() => setShowSignup(true)} />
+      <SignupDialog open={showSignup} onOpenChange={setShowSignup} onSignup={handleSignup} />
     </div>
   )
 }
