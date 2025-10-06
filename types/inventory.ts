@@ -10,6 +10,8 @@ export interface DailyUsage {
   productName: string
   quantity: number
   date: string
+  timestamp: any
+  userEmail: string
 }
 
 export interface Purchase {
@@ -17,6 +19,8 @@ export interface Purchase {
   productName: string
   quantity: number
   date: string
+  timestamp?: any // Timestamp de Firebase
+  userEmail?: string // Email de quien registró la compra
 }
 
 export interface PendingAction {

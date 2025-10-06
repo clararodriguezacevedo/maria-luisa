@@ -1,9 +1,7 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
-import { Header } from "@/components/layout/header"
-import { LoginDialog } from "@/components/dialogs/login-dialog"
 import { ConfirmationDialog } from "@/components/dialogs/confirmation-dialog"
 import { SearchInput } from "@/components/search-input"
 import { ProductListItem } from "@/components/product-list-item"
@@ -17,19 +15,13 @@ import type { PendingAction } from "@/types/inventory"
 export default function UsagePage() {
   const router = useRouter()
   const { products, confirmUsage } = useInventory()
-  const { isAdmin, login, logout } = useAuth()
-  const [showLogin, setShowLogin] = useState(false)
+  const { user, isLoading } = useAuth()
   const [showConfirmDialog, setShowConfirmDialog] = useState(false)
   const [pendingAction, setPendingAction] = useState<PendingAction | null>(null)
   const [searchQuery, setSearchQuery] = useState("")
 
   // Estado local para contadores de uso
   const [usageCounters, setUsageCounters] = useState<Record<string, number>>({})
-
-  const handleLogin = async (email: string, password: string) => {
-    return await login(email, password)
-  }
-
 
   // Filtrar productos por búsqueda
   const filteredProducts = products
@@ -89,16 +81,20 @@ export default function UsagePage() {
 
   const hasItems = Object.values(usageCounters).some((count) => count > 0)
 
+  useEffect(() => {
+    if (!isLoading && !user) {
+      router.push("/") // redirect to home or landing page
+    }
+  }, [isLoading, user, router])
+
+  if (isLoading || !user) {
+    // Optionally show a loader while checking auth
+    return <div className="min-h-screen flex items-center justify-center">Cargando...</div>
+  }
+
+
   return (
     <div className="min-h-screen bg-gray-50">
-      <Header
-        isAdmin={isAdmin}
-        onLoginClick={() => setShowLogin(true)}
-        onLogout={logout}
-        showBackButton
-        onBackClick={() => router.push("/")}
-        title="Productos Usados"
-      />
 
       <div className="p-4">
         <div className="max-w-md mx-auto space-y-4">
@@ -124,6 +120,7 @@ export default function UsagePage() {
                     <ProductListItem
                       key={product.id}
                       product={product}
+                      isNew={product.quantity === 0 && counter > 0}
                       rightContent={
                         <div className="flex items-center gap-2">
                           <Button
@@ -169,8 +166,6 @@ export default function UsagePage() {
           )}
         </div>
       </div>
-
-      <LoginDialog open={showLogin} onOpenChange={setShowLogin} onLogin={handleLogin} />
 
       <ConfirmationDialog
         open={showConfirmDialog}

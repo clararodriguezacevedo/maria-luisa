@@ -1,9 +1,7 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
-import { Header } from "@/components/layout/header"
-import { LoginDialog } from "@/components/dialogs/login-dialog"
 import { SearchInput } from "@/components/search-input"
 import { ProductListItem } from "@/components/product-list-item"
 import { InventoryFilters } from "@/components/inventory-filters"
@@ -16,15 +14,9 @@ import type { InventoryFilter } from "@/types/inventory"
 export default function InventoryPage() {
   const router = useRouter()
   const { products } = useInventory()
-  const { isAdmin, login, logout } = useAuth()
-  const [showLogin, setShowLogin] = useState(false)
+  const { isLoading, user } = useAuth()
   const [searchQuery, setSearchQuery] = useState("")
   const [activeFilter, setActiveFilter] = useState<InventoryFilter>("all")
-
-  const handleLogin = async (email: string, password: string) => {
-    return await login(email, password)
-  }
-
 
   // Filtrar productos por búsqueda
   const searchFilteredProducts = products.filter((product) =>
@@ -55,16 +47,19 @@ export default function InventoryPage() {
     normalStock: searchFilteredProducts.filter((p) => p.quantity > p.minQuantity).length,
   }
 
+  useEffect(() => {
+          if (!isLoading && !user) {
+            router.push("/") // redirect to home or landing page
+          }
+        }, [isLoading, user, router])
+      
+    if (isLoading || !user) {
+      // Optionally show a loader while checking auth
+      return <div className="min-h-screen flex items-center justify-center">Cargando...</div>
+    }
+
   return (
     <div className="min-h-screen bg-gray-50">
-      <Header
-        isAdmin={isAdmin}
-        onLoginClick={() => setShowLogin(true)}
-        onLogout={logout}
-        showBackButton
-        onBackClick={() => router.push("/")}
-        title="Inventario"
-      />
 
       <div className="p-4">
         <div className="max-w-md mx-auto space-y-4">
@@ -90,6 +85,7 @@ export default function InventoryPage() {
 
                 return (
                   <ProductListItem
+                    isNew={false}
                     key={product.id}
                     product={product}
                     rightContent={
@@ -120,8 +116,6 @@ export default function InventoryPage() {
           )}
         </div>
       </div>
-
-      <LoginDialog open={showLogin} onOpenChange={setShowLogin} onLogin={handleLogin} />
     </div>
   )
 }

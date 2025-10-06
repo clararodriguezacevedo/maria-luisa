@@ -14,6 +14,8 @@ import {
   where,
   serverTimestamp,
 } from "firebase/firestore"
+import { auth } from "@/lib/firebase" 
+import { useAuth } from "@/hooks/use-auth"
 import { db } from "@/lib/firebase"
 import type { Product, DailyUsage, Purchase, DailyUsageGroup, PurchasesGroup } from "@/types/inventory"
 
@@ -30,6 +32,7 @@ export function useInventory() {
   const [historicPurchases, setHistoricPurchases] = useState<PurchasesGroup[]>([])
 
   const today = new Date().toISOString().split("T")[0]
+  const { user } = useAuth()   
 
   // Cargar productos desde Firestore en tiempo real
   useEffect(() => {
@@ -141,51 +144,61 @@ export function useInventory() {
   }
 
   const confirmUsage = async (usageItems: Array<{ productId: string; productName: string; quantity: number }>) => {
-    for (const item of usageItems) {
-      const productRef = doc(db, "inventory", item.productId)
+  const user = auth.currentUser
+  if (!user) throw new Error("Debes iniciar sesión para registrar un consumo")
 
-      // Obtener producto actual
-      const snapshot = await getDoc(productRef)
-      if (!snapshot.exists()) continue
+  for (const item of usageItems) {
+    const productRef = doc(db, "inventory", item.productId)
 
-      const current = snapshot.data() as Product
-      const newQuantity = Math.max(0, current.quantity - item.quantity)
+    // Obtener producto actual
+    const snapshot = await getDoc(productRef)
+    if (!snapshot.exists()) continue
 
-      // Actualizar inventario
-      await updateDoc(productRef, { quantity: newQuantity })
+    const current = snapshot.data() as Product
+    const newQuantity = Math.max(0, current.quantity - item.quantity)
 
-      // Agregar a colección de uso
-      await addDoc(collection(db, "usage"), {
-        productId: item.productId,
-        productName: item.productName,
-        quantity: item.quantity,
-        date: today,
-        timestamp: serverTimestamp(),
-      })
-    }
+    // Actualizar inventario
+    await updateDoc(productRef, { quantity: newQuantity })
+
+    // Agregar a colección de uso con auditoría
+    await addDoc(collection(db, "usage"), {
+      productId: item.productId,
+      productName: item.productName,
+      quantity: item.quantity,
+      date: today,
+      timestamp: serverTimestamp(),
+      userEmail: user?.email || "desconocido",
+    })
   }
+}
 
-  const confirmPurchases = async (purchaseItems: Array<{ productId: string; productName: string; quantity: number }>) => {
-    for (const item of purchaseItems) {
-      const productRef = doc(db, "inventory", item.productId)
 
-      const snapshot = await getDoc(productRef)
-      if (!snapshot.exists()) continue
+  const confirmPurchases = async (
+  purchaseItems: Array<{ productId: string; productName: string; quantity: number }>,
+  userEmail: string
+) => {
+  for (const item of purchaseItems) {
+    const productRef = doc(db, "inventory", item.productId)
 
-      const current = snapshot.data() as Product
-      const newQuantity = current.quantity + item.quantity
+    const snapshot = await getDoc(productRef)
+    if (!snapshot.exists()) continue
 
-      await updateDoc(productRef, { quantity: newQuantity })
+    const current = snapshot.data() as Product
+    const newQuantity = current.quantity + item.quantity
 
-      await addDoc(collection(db, "purchases"), {
-        productId: item.productId,
-        productName: item.productName,
-        quantity: item.quantity,
-        date: today,
-        timestamp: serverTimestamp(),
-      })
-    }
+    await updateDoc(productRef, { quantity: newQuantity })
+
+    await addDoc(collection(db, "purchases"), {
+      productId: item.productId,
+      productName: item.productName,
+      quantity: item.quantity,
+      date: today,
+      timestamp: serverTimestamp(), // hora de registro
+      userEmail, // email de quien lo registró
+    })
   }
+}
+
 
   const dailyUsage = usageHistory.find((g) => g.date === today)?.items || []
   const lowStockItems = products.filter((p) => p.quantity <= p.minQuantity && p.quantity > 0)

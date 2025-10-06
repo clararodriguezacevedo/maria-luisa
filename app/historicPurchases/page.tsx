@@ -6,18 +6,29 @@ import { UsageHistoryDialog } from "@/components/dialogs/usage-history-dialog"
 import { Package } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 import type { PurchasesGroup } from "@/types/inventory"
+import { useEffect } from "react"
+import { useRouter } from "next/navigation"
 
 export default function HistoricPurchasesPage() {
   const { historicPurchases } = useInventory()
-  const { isAdmin, login, logout } = useAuth()
+  const router = useRouter()
+    const { isLoading, user } = useAuth()
+  
+    useEffect(() => {
+            if (!isLoading && !user) {
+              router.push("/") // redirect to home or landing page
+            }
+          }, [isLoading, user, router])
+        
+      if (isLoading || !user) {
+        // Optionally show a loader while checking auth
+        return <div className="min-h-screen flex items-center justify-center">Cargando...</div>
+      }
 
   return (
     <HistoryPageTemplate<PurchasesGroup>
       title="Historial de Compras"
       data={historicPurchases}
-      isAdmin={isAdmin}
-      onLogin={login}
-      onLogout={logout}
       getDate={(group) => group.date}
       getSearchStrings={(group) => group.items.map((item) => item.productName)}
       renderBadges={(group) => (

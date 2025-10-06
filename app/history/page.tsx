@@ -6,10 +6,24 @@ import { HistoryPageTemplate } from "@/components/generic-historic-pages"
 import type { DailyUsageGroup } from "@/types/inventory"
 import { Badge } from "@/components/ui/badge"
 import { Package } from "lucide-react"
+import { useRouter } from "next/navigation"
+import { useEffect } from "react"
 
 export default function UsageHistoryPage() {
   const { usageHistory } = useInventory()
-  const { isAdmin, login, logout } = useAuth()
+  const router = useRouter()
+  const { isLoading, user } = useAuth()
+
+  useEffect(() => {
+          if (!isLoading && !user) {
+            router.push("/") // redirect to home or landing page
+          }
+        }, [isLoading, user, router])
+      
+    if (isLoading || !user) {
+      // Optionally show a loader while checking auth
+      return <div className="min-h-screen flex items-center justify-center">Cargando...</div>
+    }
 
   return (
     <HistoryPageTemplate<DailyUsageGroup>
@@ -17,9 +31,6 @@ export default function UsageHistoryPage() {
       data={usageHistory}
       getDate={(g) => g.date}
       getSearchStrings={(g) => g.items.map((i) => i.productName)}
-      isAdmin={isAdmin}
-      onLogin={login}
-      onLogout={logout}
       renderBadges={(g) => (
         <div className="text-right">
           <div className="flex items-center gap-1 mb-1">

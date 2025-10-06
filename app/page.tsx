@@ -25,13 +25,13 @@ export default function HomePage() {
   }
 
   const handleSignup = async (email: string, password: string) => {
-  const success = await register(email, password)
-  if (success) {
-    setShowSignup(false)
-    setShowLogin(false) // <--- también cerramos login
+    const success = await register(email, password)
+    if (success) {
+      setShowSignup(false)
+      setShowLogin(false) // <--- también cerramos login
+    }
+    return success
   }
-  return success
-}
 
 
 
@@ -108,14 +108,6 @@ export default function HomePage() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <Header
-        user={user}
-        isAdmin={isAdmin}
-        onLoginClick={() => setShowLogin(true)}
-        onSignupClick={() => setShowSignup(true)}
-        onLogout={logout}
-        title="Panel Principal"
-      />
 
       <div className="p-4">
         <div className="max-w-md mx-auto space-y-4">

@@ -9,7 +9,6 @@ interface HeaderProps {
   user: any
   isAdmin: boolean
   onLoginClick: () => void
-  onSignupClick: () => void
   onLogout: () => void
   showBackButton?: boolean
   onBackClick?: () => void
@@ -20,7 +19,6 @@ export function Header({
   user,
   isAdmin,
   onLoginClick,
-  onSignupClick,
   onLogout,
   showBackButton = false,
   onBackClick,

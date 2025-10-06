@@ -3,10 +3,8 @@
 import { useState } from "react"
 import { useRouter } from "next/navigation"
 import { Calendar, ChevronRight } from "lucide-react"
-import { Header } from "@/components/layout/header"
 import { SearchInput } from "@/components/search-input"
 import { Card, CardContent } from "@/components/ui/card"
-import { LoginDialog } from "@/components/dialogs/login-dialog"
 
 interface HistoryPageTemplateProps<T> {
   title: string
@@ -15,25 +13,16 @@ interface HistoryPageTemplateProps<T> {
   getSearchStrings: (item: T) => string[]
   renderBadges?: (item: T) => React.ReactNode
   renderDialog: (selected: T | null, open: boolean, onOpenChange: (open: boolean) => void) => React.ReactNode
-  onLogin: (email: string, password: string) => Promise<boolean>
-  isAdmin: boolean
-  onLogout: () => void
 }
 
 export function HistoryPageTemplate<T>({
-  title,
   data,
-isAdmin,
   getDate,
   getSearchStrings,
   renderBadges,
   renderDialog,
-  onLogin,
-  onLogout,
 }: HistoryPageTemplateProps<T>) {
-  const router = useRouter()
   const [searchQuery, setSearchQuery] = useState("")
-  const [showLogin, setShowLogin] = useState(false)
   const [selectedItem, setSelectedItem] = useState<T | null>(null)
   const [showDialog, setShowDialog] = useState(false)
 
@@ -70,14 +59,6 @@ isAdmin,
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <Header
-        isAdmin={isAdmin}
-        onLoginClick={() => setShowLogin(true)}
-        onLogout={onLogout}
-        showBackButton
-        onBackClick={() => router.push("/")}
-        title={title}
-      />
 
       <div className="p-4">
         <div className="max-w-md mx-auto space-y-4">
@@ -156,8 +137,6 @@ isAdmin,
           )}
         </div>
       </div>
-
-      <LoginDialog open={showLogin} onOpenChange={setShowLogin} onLogin={onLogin} />
       {renderDialog(selectedItem, showDialog, setShowDialog)}
     </div>
   )

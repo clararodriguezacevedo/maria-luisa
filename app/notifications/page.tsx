@@ -1,9 +1,7 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
-import { Header } from "@/components/layout/header"
-import { LoginDialog } from "@/components/dialogs/login-dialog"
 import { SearchInput } from "@/components/search-input"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Alert, AlertDescription } from "@/components/ui/alert"
@@ -14,14 +12,8 @@ import { AlertTriangle, CheckCircle } from "lucide-react"
 export default function NotificationsPage() {
   const router = useRouter()
   const { lowStockItems, outOfStockItems } = useInventory()
-  const { isAdmin, login, logout } = useAuth()
-  const [showLogin, setShowLogin] = useState(false)
+  const { user, isLoading } = useAuth()
   const [searchQuery, setSearchQuery] = useState("")
-
-  const handleLogin = async (email: string, password: string) => {
-    return await login(email, password)
-  }
-
 
   const allAlerts = [...outOfStockItems, ...lowStockItems.filter((item) => item.quantity > 0)]
 
@@ -30,16 +22,19 @@ export default function NotificationsPage() {
 
   const hasAlerts = allAlerts.length > 0
 
+  useEffect(() => {
+        if (!isLoading && !user) {
+          router.push("/") // redirect to home or landing page
+        }
+      }, [isLoading, user, router])
+    
+  if (isLoading || !user) {
+    // Optionally show a loader while checking auth
+    return <div className="min-h-screen flex items-center justify-center">Cargando...</div>
+  }
+
   return (
     <div className="min-h-screen bg-gray-50">
-      <Header
-        isAdmin={isAdmin}
-        onLoginClick={() => setShowLogin(true)}
-        onLogout={logout}
-        showBackButton
-        onBackClick={() => router.push("/")}
-        title="Notificaciones"
-      />
 
       <div className="p-4">
         <div className="max-w-md mx-auto space-y-4">
@@ -99,8 +94,6 @@ export default function NotificationsPage() {
           )}
         </div>
       </div>
-
-      <LoginDialog open={showLogin} onOpenChange={setShowLogin} onLogin={handleLogin} />
     </div>
   )
 }

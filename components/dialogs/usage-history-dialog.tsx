@@ -4,6 +4,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Badge } from "@/components/ui/badge"
 import { Calendar, Package } from "lucide-react"
 import type { DailyUsageGroup, PurchasesGroup } from "@/types/inventory"
+import { Timestamp } from "firebase/firestore"
 
 interface UsageHistoryDialogProps {
   open: boolean
@@ -12,9 +13,7 @@ interface UsageHistoryDialogProps {
 }
 
 function isDailyUsageGroup(obj: any): obj is DailyUsageGroup {
-  return obj &&
-    typeof obj.date === 'string' &&
-    typeof obj.usage === 'number';
+  return obj && typeof obj.date === 'string' && typeof obj.totalQuantity === 'number'
 }
 
 export function UsageHistoryDialog({ open, onOpenChange, usageGroup }: UsageHistoryDialogProps) {
@@ -26,18 +25,19 @@ export function UsageHistoryDialog({ open, onOpenChange, usageGroup }: UsageHist
     const yesterday = new Date(today)
     yesterday.setDate(yesterday.getDate() - 1)
 
-    if (dateString === today.toISOString().split("T")[0]) {
-      return "Hoy"
-    } else if (dateString === yesterday.toISOString().split("T")[0]) {
-      return "Ayer"
-    } else {
-      return date.toLocaleDateString("es-ES", {
-        weekday: "long",
-        year: "numeric",
-        month: "long",
-        day: "numeric",
-      })
-    }
+    if (dateString === today.toISOString().split("T")[0]) return "Hoy"
+    if (dateString === yesterday.toISOString().split("T")[0]) return "Ayer"
+    return date.toLocaleDateString("es-ES", {
+      weekday: "long",
+      year: "numeric",
+      month: "long",
+      day: "numeric",
+    })
+  }
+
+  const formatTime = (ts?: Timestamp) => {
+    if (!ts) return "-"
+    return ts.toDate().toLocaleTimeString("es-ES", { hour: "2-digit", minute: "2-digit" })
   }
 
   return (
@@ -52,22 +52,14 @@ export function UsageHistoryDialog({ open, onOpenChange, usageGroup }: UsageHist
         </DialogHeader>
 
         <div className="space-y-4">
-          
-          {isDailyUsageGroup(usageGroup) &&
-          <div className="bg-blue-50 p-3 rounded-lg">
-            <div className="flex items-center justify-between text-sm">
-              <span className="text-blue-800">Total de productos diferentes:</span>
-              <Badge variant="default" className="bg-blue-600">
-                {usageGroup.totalProducts}
-              </Badge>
+          {isDailyUsageGroup(usageGroup) && (
+            <div className="bg-blue-50 p-3 rounded-lg">
+              <div className="flex items-center justify-between text-sm mt-1">
+                <span className="text-blue-800">Total de unidades usadas:</span>
+                <Badge variant="default" className="bg-blue-600">{usageGroup.totalQuantity}</Badge>
+              </div>
             </div>
-            <div className="flex items-center justify-between text-sm mt-1">
-              <span className="text-blue-800">Total de unidades usadas:</span>
-              <Badge variant="default" className="bg-blue-600">
-                {usageGroup.totalQuantity}
-              </Badge>
-            </div>
-          </div>}
+          )}
 
           <div className="space-y-2">
             <h4 className="font-medium text-gray-900 flex items-center gap-2">
@@ -78,14 +70,19 @@ export function UsageHistoryDialog({ open, onOpenChange, usageGroup }: UsageHist
               {usageGroup.items
                 .sort((a, b) => b.quantity - a.quantity)
                 .map((item, index) => (
-                  <div
-                    key={`${item.productId}-${index}`}
-                    className="flex items-center justify-between py-2 px-3 bg-gray-50 rounded"
-                  >
-                    <span className="text-sm font-medium text-gray-900 flex-1 truncate">{item.productName}</span>
-                    <Badge variant="outline" className="ml-2">
-                      {item.quantity} {item.quantity === 1 ? "unidad" : "unidades"}
-                    </Badge>
+                  <div key={`${item.productId}-${index}`} className="flex flex-col p-2 bg-gray-50 rounded">
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm font-medium text-gray-900 flex-1 truncate">{item.productName}</span>
+                      <Badge variant="outline" className="ml-2">
+                        {item.quantity} {item.quantity === 1 ? "unidad" : "unidades"}
+                      </Badge>
+                    </div>
+                    {/* Auditoría */}
+                    {item.userEmail && (
+                      <p className="text-xs text-gray-500 mt-1">
+                        Registrado por <strong>{item.userEmail}</strong> a las {formatTime(item.timestamp)}
+                      </p>
+                    )}
                   </div>
                 ))}
             </div>
