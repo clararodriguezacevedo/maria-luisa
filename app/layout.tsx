@@ -8,7 +8,7 @@ import { LoginDialog } from "@/components/dialogs/login-dialog"
 import { SignupDialog } from "@/components/dialogs/signup-dialog"
 import { useInventory } from "@/hooks/use-inventory"
 import type { Metadata } from 'next'
-import './globals.css'
+import './styles/globals.css'
 
 // export const metadata: Metadata = {
 //   title: 'Inventario Maria Luisa',
